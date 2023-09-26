@@ -25,12 +25,13 @@ public class LobbyManager : NetworkBehaviour {
     }
 
     private void StartGame() {
-        NetworkManager.SceneManager.LoadScene("MainArea", UnityEngine.SceneManagement.LoadSceneMode.Single);
+        NetworkManager.SceneManager.LoadScene("TestChat", UnityEngine.SceneManagement.LoadSceneMode.Single);
     }
 
     private void OnServerStarted() {
-        startButton.gameObject.SetActive(true);
-        statusLabel.text = "Press Start";
+        //startButton.gameObject.SetActive(true);
+        //statusLabel.text = "Press Start";
+        StartGame();
     }
 
     private void OnClientStarted() {
