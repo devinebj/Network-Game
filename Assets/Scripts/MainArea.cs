@@ -1,10 +1,10 @@
 using UnityEngine;
 using Unity.Netcode;
-using System.Collections.Generic;
+using Unity.VisualScripting;
 
 public class MainArea : NetworkBehaviour {
-    [SerializeField] private Player HostPrefab;
-    [SerializeField] private Player ClientPrefab;
+    [SerializeField] private Player hostPrefab;
+    [SerializeField] private Player clientPrefab;
     [SerializeField] private Camera areaCamera;
     private int positionIndex;
 
@@ -16,6 +16,7 @@ public class MainArea : NetworkBehaviour {
     };
 
     private int colorIndex = 0;
+
     private Color[] playerColors = new Color[] {
         Color.red,
         Color.yellow,
@@ -26,14 +27,14 @@ public class MainArea : NetworkBehaviour {
     private void Start() {
         areaCamera.enabled = false;
         areaCamera.GetComponent<AudioListener>().enabled = !IsClient;
-        
-        if (IsServer) { SpawnPlayers(); }
+
+        if (IsServer) {
+            SpawnPlayers();
+        }
     }
 
     private void Update() {
-        foreach(ulong clientId in NetworkManager.ConnectedClientsIds) {
-            if (clientId != NetworkManager.LocalClientId) { EnforceBoundary(); }
-        }
+        EnforceBoundary();
     }
 
     private Color NextColor() {
@@ -49,20 +50,41 @@ public class MainArea : NetworkBehaviour {
     }
 
     private void SpawnPlayers() {
-        foreach(ulong clientId in NetworkManager.ConnectedClientsIds) {
-            Player playerPrefab = (clientId == NetworkManager.LocalClientId) ? HostPrefab : ClientPrefab;
+        foreach (ulong clientId in NetworkManager.ConnectedClientsIds) {
+            Player playerPrefab = hostPrefab;
             Player playerSpawn = Instantiate(playerPrefab, NextPostition(), Quaternion.identity);
-            playerSpawn.GetComponent<NetworkObject>().SpawnWithOwnership(clientId);
+            playerSpawn.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId);
             playerSpawn.playerColorNetVar.Value = NextColor();
         }
     }
 
     private void EnforceBoundary() {
-        Vector3 position = transform.position;
+        if (!IsServer) { return; }
+        
+        foreach (ulong clientId in NetworkManager.ConnectedClientsIds) {
+            if (clientId == NetworkManager.LocalClientId) { continue; }
+            
+            NetworkClient client = NetworkManager.ConnectedClients[clientId];
+            if (client?.PlayerObject is null) {
+                print("PlayerObject is null");
+                continue;
+            }
 
-        if (position.x > 5) { position.x = 5; }
-        if (position.x < -5) { position.x = -5; }
-        if (position.z > 5) { position.z = 5; }
-        if (position.z < 5) { position.z = -5; }
+            Player player = client.PlayerObject.GetComponent<Player>();
+            if (player is null) {
+                print("Player component is null");
+                continue;
+            }
+
+            Vector3 position = player.transform.position;
+            Vector3 clampedPosition = position;
+
+            clampedPosition.x = Mathf.Clamp(position.x, -5, 5);
+            clampedPosition.z = Mathf.Clamp(position.z, -5, 5);
+
+            if (clampedPosition != position) {
+                player.transform.position = clampedPosition;
+            }
+        }
     }
 }

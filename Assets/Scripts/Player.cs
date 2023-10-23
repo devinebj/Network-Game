@@ -5,21 +5,40 @@ public class Player : NetworkBehaviour {
     [SerializeField] private float movementSpeed = 50f;
     [SerializeField] private float rotationSpeed = 130f;
     [SerializeField] private MeshRenderer playerMeshRenderer;
+    public BulletSpawner bulletSpawner;
 
     public Color playerColor = Color.red;
-    public NetworkVariable<Color> playerColorNetVar = new NetworkVariable<Color>(Color.red);
+    public NetworkVariable<Color> playerColorNetVar = new(Color.red);
+    public NetworkVariable<int> scoreNetVar = new(0);
 
+    private GameObject playerBody;
     private Camera playerCamera;
 
-    private void Start() {
+    private void NetworkInit() {
+        playerBody = transform.Find("PlayerBody").gameObject;
         playerCamera = transform.Find("Camera").GetComponent<Camera>();
+        
         playerCamera.enabled = IsOwner;
         playerCamera.GetComponent<AudioListener>().enabled = IsOwner;
         ApplyColor();
+
+        if (IsClient) {
+            scoreNetVar.OnValueChanged += ClientOnScoreValueChanged;
+        }
+    }
+    
+    private void Start() {
+        NetworkHelper.Log(this, "Start");
     }
 
     private void Update() {
-        if (IsOwner) { OwnerHandleInput(); } 
+        if (IsOwner) {
+            OwnerHandleInput();
+            if (Input.GetButtonDown("Fire1")) {
+                NetworkHelper.Log("Requesting Fire");
+                bulletSpawner.FireServerRpc();
+            }
+        }
     }
 
     private void OwnerHandleInput() {
@@ -35,7 +54,49 @@ public class Player : NetworkBehaviour {
         playerMeshRenderer.GetComponent<MeshRenderer>().material.color = playerColorNetVar.Value;
     }
 
-    [ServerRpc(RequireOwnership = true)]
+    public override void OnNetworkSpawn() {
+        NetworkHelper.Log(this, "OnNetworkSpawn");
+        NetworkInit();
+        base.OnNetworkSpawn();
+    }
+
+    private void ClientOnScoreValueChanged(int old, int current) {
+        if (IsOwner) {
+            NetworkHelper.Log(this, $"My score is {scoreNetVar.Value}");
+        }
+    }
+
+    private void OnCollisionEnter(Collision collision) {
+        if (IsServer) {
+            ServerHandleCollision(collision);
+        }
+    }
+
+    private void OnTriggerEnter(Collider other) {
+        if (IsServer) {
+            if (other.CompareTag("PowerUp")) {
+                other.GetComponent<BasePowerUp>().ServerPickup(this);
+            }
+        }
+    }
+
+    private void ServerHandleCollision(Collision collision) {
+        if (collision.gameObject.CompareTag("Bullet")) {
+            ulong ownerId = collision.gameObject.GetComponent<NetworkObject>().OwnerClientId;
+            NetworkHelper.Log(this,
+                $"Hit by {collision.gameObject.name}" +
+                $"owned by {ownerId}");
+            Player other = NetworkManager.Singleton.ConnectedClients[ownerId].PlayerObject.GetComponent<Player>();
+            other.scoreNetVar.Value += 1;
+            collision.gameObject.GetComponent<NetworkObject>().Despawn();
+        }
+    }
+
+    public void OnPlayerColorChanged(Color previous, Color current) {
+        ApplyColor();
+    }
+    
+    [ServerRpc]
     private void MoveServerRpc(Vector3 movement, Vector3 rotation) {
         transform.Translate(movement);
         transform.Rotate(rotation);

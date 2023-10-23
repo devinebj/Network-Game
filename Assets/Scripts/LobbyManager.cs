@@ -1,10 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.UI;
-using Unity.VisualScripting;
-using System;
 
 public class LobbyManager : NetworkBehaviour {
     [SerializeField] Button startButton;
@@ -25,16 +21,17 @@ public class LobbyManager : NetworkBehaviour {
     }
 
     private void StartGame() {
-        NetworkManager.SceneManager.LoadScene("TestChat", UnityEngine.SceneManagement.LoadSceneMode.Single);
+        NetworkManager.SceneManager.LoadScene("MainArea", UnityEngine.SceneManagement.LoadSceneMode.Single);
     }
 
     private void OnServerStarted() {
-        //startButton.gameObject.SetActive(true);
-        //statusLabel.text = "Press Start";
-        StartGame();
+        startButton.gameObject.SetActive(true);
+        statusLabel.text = "Press Start";
     }
 
     private void OnClientStarted() {
-        if (!IsHost) { statusLabel.text = "Waiting for game to start"; }
+        if (!IsHost) {
+            statusLabel.text = "Waiting for game to start";
+        }
     }
 }

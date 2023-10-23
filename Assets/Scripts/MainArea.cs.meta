@@ -3,7 +3,12 @@ guid: 9e8fbad4a29a27c4689bc2af3ed2eaa1
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - hostPrefab: {fileID: 1014040785024158090, guid: 9a8c8ebd1e0f8084ea0524a484a05b1d,
+      type: 3}
+  - clientPrefab: {fileID: 3631918052832420177, guid: 7cd5f568396bd6d4999065cdd2c6608c,
+      type: 3}
+  - areaCamera: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
