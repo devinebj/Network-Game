@@ -1155,6 +1155,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   startButton: {fileID: 2009250648}
   statusLabel: {fileID: 402626108}
+  lobbyName: Lobby
 --- !u!4 &1538293919
 Transform:
   m_ObjectHideFlags: 0

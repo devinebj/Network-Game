@@ -7,7 +7,8 @@ public class MainArea : NetworkBehaviour {
     [SerializeField] private Player clientPrefab;
     [SerializeField] private Camera areaCamera;
     private int positionIndex;
-
+    private NetworkedPlayers networkedPlayers;
+    
     private Vector3[] startPositions = new Vector3[] {
         new Vector3(4, 2, 0),
         new Vector3(-4, 2, 0),
@@ -15,19 +16,11 @@ public class MainArea : NetworkBehaviour {
         new Vector3(0, 2, -4)
     };
 
-    private int colorIndex = 0;
-
-    private Color[] playerColors = new Color[] {
-        Color.red,
-        Color.yellow,
-        Color.green,
-        Color.blue
-    };
-
     private void Start() {
         areaCamera.enabled = false;
         areaCamera.GetComponent<AudioListener>().enabled = !IsClient;
-
+        networkedPlayers = GameObject.Find("NetworkedPlayers").GetComponent<NetworkedPlayers>();
+        
         if (IsServer) {
             SpawnPlayers();
         }
@@ -37,12 +30,6 @@ public class MainArea : NetworkBehaviour {
         EnforceBoundary();
     }
 
-    private Color NextColor() {
-        Color newColor = playerColors[colorIndex % playerColors.Length];
-        colorIndex++;
-        return newColor;
-    }
-
     private Vector3 NextPostition() {
         Vector3 pos = startPositions[positionIndex % startPositions.Length];
         positionIndex++;
@@ -50,11 +37,11 @@ public class MainArea : NetworkBehaviour {
     }
 
     private void SpawnPlayers() {
-        foreach (ulong clientId in NetworkManager.ConnectedClientsIds) {
+        foreach (NetworkPlayerInfo info in networkedPlayers.allNetPlayers) {
             Player playerPrefab = hostPrefab;
             Player playerSpawn = Instantiate(playerPrefab, NextPostition(), Quaternion.identity);
-            playerSpawn.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId);
-            playerSpawn.playerColorNetVar.Value = NextColor();
+            playerSpawn.GetComponent<NetworkObject>().SpawnAsPlayerObject(info.ClientId);
+            playerSpawn.playerColor = info.Color;
         }
     }
 

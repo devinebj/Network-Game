@@ -30,11 +30,9 @@ public class NetworkHandler : NetworkBehaviour {
         NetworkManager.OnClientConnectedCallback += ClientOnClientConnected;
         NetworkManager.OnClientDisconnectCallback += ClientOnClientDisconnected;
         NetworkManager.OnClientStopped += ClientOnClientStopped;
-        PrintMe();
     }
 
     private void ClientOnClientConnected(ulong clientId) {
-        PrintMe();
         if (!IsServer) Debug.Log($"I {clientId} have connected to the server");
         else Debug.Log("Some other client connected");
     }
@@ -59,7 +57,6 @@ public class NetworkHandler : NetworkBehaviour {
         NetworkManager.OnClientConnectedCallback += ServerOnClientConnected;
         NetworkManager.OnClientDisconnectCallback += ServerOnClientDisconnected;
         NetworkManager.OnServerStopped += ServerOnServerStopped;
-        PrintMe();
     }
 
     private void ServerOnClientConnected(ulong clientId) {

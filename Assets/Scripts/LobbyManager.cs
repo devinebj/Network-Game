@@ -20,13 +20,16 @@ public class LobbyManager : NetworkBehaviour {
         StartGame();
     }
 
+    public void GoToLobby() {
+        NetworkManager.SceneManager.LoadScene("Lobby", UnityEngine.SceneManagement.LoadSceneMode.Single);
+    }
+
     private void StartGame() {
         NetworkManager.SceneManager.LoadScene("MainArea", UnityEngine.SceneManagement.LoadSceneMode.Single);
     }
 
     private void OnServerStarted() {
-        startButton.gameObject.SetActive(true);
-        statusLabel.text = "Press Start";
+        GoToLobby();
     }
 
     private void OnClientStarted() {
